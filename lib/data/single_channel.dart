@@ -23,14 +23,14 @@ class ChannelDetails {
   
   factory ChannelDetails.fromJson(Map<String, dynamic> json) {
     return ChannelDetails(
-      id: json['_id'],
-      createTimeString: json['ts'],
-      name: json['name'],
-      messagesCount: json['msgs'],
-      usersCount: json['usersCount'],
-      lastMessageTimeString: json['lastMessage']['ts'],
-      lastMessage: json['lastMessage']['msg'],
-      createdByUname: json['u']['username'],
+      id: json['_id']??'',
+      createTimeString: json['ts']??'',
+      name: json['name']??'',
+      messagesCount: json['msgs']??0,
+      usersCount: json['usersCount']??0,
+      lastMessageTimeString: json['lastMessage']?['ts']??'',
+      lastMessage: json['lastMessage']?['msg']??'',
+      createdByUname: json['u']?['username']??'',
     );
   }
   

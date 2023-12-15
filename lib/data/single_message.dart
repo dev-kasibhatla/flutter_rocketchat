@@ -25,13 +25,13 @@ class MessageDetails {
     _logd('creating message details from ${jsonEncode(json)}');
     //add a profile
     return MessageDetails(
-      id: json['_id'],
-      channelId: json['rid'],
-      message: json['msg'],
-      createTimeString: json['ts'],
-      senderId: json['u']['_id'],
-      name: json['u']['name'],
-      username: json['u']['username']
+      id: json['_id']??'',
+      channelId: json['rid']??'',
+      message: json['msg']??'',
+      createTimeString: json['ts']??'',
+      senderId: json['u']['_id']??'',
+      name: json['u']['name']??'',
+      username: json['u']['username']??'',
     );
   }
 
