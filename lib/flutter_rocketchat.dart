@@ -70,4 +70,13 @@ class RocketChatProvider {
   static Future<List<ChannelDetails>> listAvailableChannels () async {
     return await _RocketMessageStore.listAvailableChannels();
   }
+
+  static Future precacheUsersFromChannel({required String channelId, List<String> status = const [], int count = 500}) {
+    return _UserDataStore.precacheUsersFromChannel(channelId: channelId, status: status, count: count);
+  }
+
+  //messages
+  static Future<bool> sendMessage({required String message, required String channelId}) async {
+    return await _RocketMessageStore.sendMessage(message: message, channelId: channelId);
+  }
 }

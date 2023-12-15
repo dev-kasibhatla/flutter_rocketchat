@@ -26,6 +26,13 @@ class _RocketMessageStore {
     }
   }
 
+  /// Fetches a list of available channels from the server
+  ///
+  /// returns a list of [ChannelDetails]
+  ///
+  /// returns an empty list if no channels are found
+  ///
+  /// returns an empty list if an error occurs
   static Future<List<ChannelDetails>> listAvailableChannels () async {
     try{
       _logd('starting listAvailableChannels');
@@ -41,5 +48,39 @@ class _RocketMessageStore {
       return [];
     }
   }
+
+  /// Sends a message to the given channel
+  ///
+  /// [message] is the message to send
+  ///
+  /// [channelId] is the channel id to send the message to
+  ///
+  /// returns true if the message was sent successfully
+  ///
+  /// returns false if the message failed to send
+  static Future<bool> sendMessage({required String message, required String channelId}) async {
+    assert (message.isNotEmpty);
+    assert (channelId.isNotEmpty);
+    _logd('sendMessage: $message, $channelId');
+    Map<String, dynamic> body = {
+      'message' : {
+        'rid': channelId,
+        'msg': message,
+      }
+    };
+    try {
+      RResponse response = await _Requests.post(_UrlProvider.chatSendMessage, body: body);
+      _logd('sendMessage: response: ${response.data}');
+      return response.success;
+    } catch (e,s) {
+      _loge('sendMessage: $e\n$s');
+      return false;
+    }
+  }
+
+  static void startListeningToChannelMessages(String channelId) {
+    _logd('startListeningToChannelMessages: $channelId');
+  }
+
 
 }
