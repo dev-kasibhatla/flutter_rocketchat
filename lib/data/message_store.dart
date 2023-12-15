@@ -123,6 +123,40 @@ class _RocketMessageStore {
     }
   }
 
+
+  /// Fetches pinned messages from the server for the given channel
+  ///
+  /// [channelId] is the channel id to fetch pinned messages for
+  ///
+  /// [offset] is the number of messages to skip (pagination)
+  ///
+  /// [count] is the number of messages to fetch (page size)
+  /// if count is 0, all messages will be fetched
+  ///
+  /// returns a list of [MessageDetails]
+  static Future<List<MessageDetails>> getPinnedMessages ({required String channelId, int offset=0, int count=0}) async {
+    assert (channelId.isNotEmpty);
+    _logd('getPinnedMessages: $channelId');
+    try{
+      String params = "?roomId=$channelId&offset=$offset";
+      if (count > 0) {
+        params += '&count=$count';
+      }
+      RResponse response = await _Requests.get(_UrlProvider.getPinnedMessages, params);
+      _logd('getPinnedMessages: response: ${response.data}');
+      List<MessageDetails> messages = [];
+      if (response.success) {
+        for (var message in response.data['messages']) {
+          messages.add(MessageDetails.fromJson(message));
+        }
+      }
+      return messages;
+    } catch (e,s) {
+      _loge('getPinnedMessages: $e\n$s');
+      return [];
+    }
+  }
+
   static void startListeningToChannelMessages(String channelId) {
     _logd('startListeningToChannelMessages: $channelId');
   }

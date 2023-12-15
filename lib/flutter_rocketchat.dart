@@ -87,4 +87,8 @@ class RocketChatProvider {
   static Future<bool> deleteMessage({required String messageId, required String channelId}) async {
     return await _RocketMessageStore.deleteMessage(messageId: messageId, channelId: channelId);
   }
+
+  static Future<List<MessageDetails>> getPinnedMessages ({required String channelId, int offset=0, int count=0}) async {
+    return await _RocketMessageStore.getPinnedMessages(channelId: channelId, offset: offset, count: count);
+  }
 }
