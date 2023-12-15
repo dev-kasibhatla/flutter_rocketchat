@@ -25,6 +25,8 @@ class _UrlProvider {
 
   //chat
   static Uri chatPostMessage = Uri.parse('$_baseUrl/api/v1/chat.postMessage');
+  static Uri chatSendMessage = Uri.parse('$_baseUrl/api/v1/chat.sendMessage'); //https://developer.rocket.chat/reference/api/rest-api/endpoints/messaging/chat-endpoints/send-message
   static Uri getPinnedMessages = Uri.parse('$_baseUrl/api/v1/chat.getPinnedMessages');
   static Uri syncMessages = Uri.parse('$_baseUrl/api/v1/chat.syncMessages');
+  static Uri deleteMessage = Uri.parse('$_baseUrl/api/v1/chat.delete');
 }
