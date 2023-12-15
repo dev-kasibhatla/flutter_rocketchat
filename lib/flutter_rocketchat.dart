@@ -79,4 +79,12 @@ class RocketChatProvider {
   static Future<bool> sendMessage({required String message, required String channelId}) async {
     return await _RocketMessageStore.sendMessage(message: message, channelId: channelId);
   }
+
+  static Future<bool> reportMessage({required String messageId, required String description}) async {
+    return await _RocketMessageStore.reportMessage(messageId: messageId, description: description);
+  }
+
+  static Future<bool> deleteMessage({required String messageId, required String channelId}) async {
+    return await _RocketMessageStore.deleteMessage(messageId: messageId, channelId: channelId);
+  }
 }

@@ -78,6 +78,51 @@ class _RocketMessageStore {
     }
   }
 
+  /// Reports a message to the server
+  ///
+  /// [messageId] is the id of the message to report
+  ///
+  /// [description] is the reason for reporting the message
+  ///
+  /// returns true if the message was reported successfully
+  ///
+  /// returns false if the message failed to report
+  static Future<bool> reportMessage({required String messageId, required String description}) async {
+    assert (messageId.isNotEmpty);
+    assert (description.isNotEmpty);
+    _logd('reportMessage: $messageId, $description');
+    try{
+      Map<String, dynamic> body = {
+        'messageId': messageId,
+        'description': description,
+      };
+      RResponse response = await _Requests.post(_UrlProvider.chatReportMessage, body: body);
+      _logd('reportMessage: response: ${response.data}');
+      return response.success;
+    } catch (e,s) {
+      _loge('reportMessage: $e\n$s');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteMessage({required String channelId, required String messageId}) async {
+    assert (channelId.isNotEmpty);
+    assert (messageId.isNotEmpty);
+    _logd('deleteMessage: $channelId, $messageId');
+    try{
+      Map<String, dynamic> body = {
+        'roomId': channelId,
+        'msgId': messageId,
+      };
+      RResponse response = await _Requests.post(_UrlProvider.chatDeleteMessage, body: body);
+      _logd('deleteMessage: response: ${response.data}');
+      return response.success;
+    } catch (e,s) {
+      _loge('deleteMessage: $e\n$s');
+      return false;
+    }
+  }
+
   static void startListeningToChannelMessages(String channelId) {
     _logd('startListeningToChannelMessages: $channelId');
   }
