@@ -20,6 +20,30 @@ class _UserDataStore {
     }
   }
 
+  static void batchAddUsersToStore(List<dynamic> users) {
+    for (Map user in users) {
+      addUserToStore(user['_id']??'', user['username']??'', user['name']??'', user['avatarUrl']??'');
+    }
+    _saveProfilesToStorage();
+    _logd('batchAddUsersToStore: added ${users.length} users to store');
+  }
+
+  static Future<void> precacheUsersFromChannel({required String channelId, List<String> status = const [], int count = 500}) async {
+    try{
+      String params = '?roomId=$channelId&count=$count';
+      if(status.isNotEmpty) {
+        params += '&status[]=${status.join(',')}';
+      }
+      RResponse response = await _Requests.get(_UrlProvider.allChannelUsers, params);
+      _logd('precacheUsersFromChannel response: ${response.data}');
+      if(response.success) {
+        batchAddUsersToStore(response.data['members']??[]);
+      }
+    } catch (e,s) {
+      _loge('precacheUsersFromChannel: $e\n$s');
+    }
+  }
+
   static Future<void> _loadProfilesFromStorage() async {
     String profilesJson = await _StorageProvider.read(_StorageKeys.userProfiles);
     if (profilesJson.isEmpty) {
