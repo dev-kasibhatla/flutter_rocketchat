@@ -55,6 +55,26 @@ class RocketChatProvider {
     _storeLogLevel = minimumLogLevel;
   }
 
+  /// - Login with username and password
+  ///
+  /// - [username] is the username to login with
+  ///
+  /// - [password] is the password to login with
+  ///
+  /// - Returns a [RocketProfile] object with the user's profile data
+  ///
+  /// - If the login fails, the [RocketProfile] object will have an error message
+  ///
+  /// - If the login is successful, the [RocketProfile] object will have the user's profile data.
+  /// Additionally, the [authToken] and [userId] will be set.
+  /// This is the only way to set these values apart from [loginUsingResumeToken]
+  ///
+  /// Additional notes:
+  /// - It is up to the developer using this package to store the [authToken] and
+  /// [userId] for future use.
+  ///
+  /// - The developer may also choose to store the [authToken] and [userId]
+  /// in a secure storage to persist across sessions for a better UX.
   static Future<RocketProfile> loginWithUsernamePassword(String username, String password) async {
     assert (username.isNotEmpty);
     assert (password.isNotEmpty);
@@ -65,16 +85,44 @@ class RocketChatProvider {
     return await _Auth.fetchProfile();
   }
 
+  /// - Login with resume token
+  ///
+  /// - [token] is the resume token to login with
+  ///
+  /// - Returns a [RocketProfile] object with the user's profile data
+  ///
+  /// - If the login fails, the [RocketProfile] object will have an error message
+  ///
+  /// - If the login is successful, the [RocketProfile] object will have the user's profile data.
+  ///
+  /// Additional notes:
+  /// - It is up to the developer using this package to store the [authToken] and
+  /// [userId] for future use.
+  ///
+  /// - The developer may also choose to store the [authToken] and [userId]
+  /// in a secure storage to persist across sessions for a better UX.
+  ///
+  /// - The resume token is a token that is returned by the server when the user logs in.
+  ///
+  /// - Validity of the resume token depends on the server configuration.
+  ///
+  /// - If you don't have a resume token, you can get one by logging in with username and password
   static Future<RocketProfile> loginUsingResumeToken(String token) async {
     assert (token.isNotEmpty);
     return await _Auth.loginUsingResumeToken(token);
   }
 
-  static Future<void> logout() async {
-    await _Auth.logout();
   static void loginRealtimeUsingResumeToken(String token, {Function(String authToken, int expiry, String userId)? onSuccess, Function(Map errorResponse)? onError}) {
     return _Auth.authenticateRealtimeWithResumeToken(token, onConnected: onSuccess, onError: onError);
   }
+
+  /// - Returns true if logout was successful, false otherwise
+  /// - Additional notes:
+  /// - This method will clear the [authToken] and [userId] values
+  /// - It is up to the developer using this package to clear the [authToken] and
+  /// [userId] values from storage upon successful logout
+  static Future<bool> logout() async {
+    return await _Auth.logout();
   }
 
   static bool isAuthenticated() {
