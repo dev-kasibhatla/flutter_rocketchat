@@ -72,6 +72,9 @@ class RocketChatProvider {
 
   static Future<void> logout() async {
     await _Auth.logout();
+  static void loginRealtimeUsingResumeToken(String token, {Function(String authToken, int expiry, String userId)? onSuccess, Function(Map errorResponse)? onError}) {
+    return _Auth.authenticateRealtimeWithResumeToken(token, onConnected: onSuccess, onError: onError);
+  }
   }
 
   static bool isAuthenticated() {

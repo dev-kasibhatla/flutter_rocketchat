@@ -89,38 +89,64 @@ class _SocketHelper {
       case 'ping':
         handlePingMessages();
         break;
+      case 'error':
+        _logw('socket error: ${message['error']}');
+        if (message.containsKey('offendingMessage')) {
+          String id = message['offendingMessage']['id']??'';
+          if (messageStatuses.containsKey(id)) {
+            messageStatuses[id] = RocketMessageStatus.failed;
+            messageErrorCallbacks[id]!(message);
+          }
+          //remove both callbacks
+          try {
+            messageCallbacks.remove(id);
+            messageErrorCallbacks.remove(id);
+          } catch (e, s) {
+            _logw('error removing message callbacks: $e\n$s');
+          }
+        }
+        break;
       default:
         //fire callback
+      _logd('firing callback for message: $message');
         if (message.containsKey('id')) {
-          if (messageStatuses.containsKey(message['id'])) {
-            messageStatuses[message['id']] = RocketMessageStatus.responded;
-            messageCallbacks[message['id']]!(message);
+          if (messageStatuses.containsKey(message['id']??'')) {
+            messageStatuses[message['id']??''] = RocketMessageStatus.responded;
+            messageCallbacks[message['id']??'']!(message);
           }
+        }
+        // remove both callbacks
+        try {
+          messageCallbacks.remove(message['id']??'');
+          messageErrorCallbacks.remove(message['id']??'');
+        } catch (e, s) {
+          _logw('error removing message callbacks: $e\n$s');
         }
         break;
     }
   }
 
-  static Map<int, RocketMessageStatus> messageStatuses = {};
-  static Map<int, Function(Map response)> messageCallbacks = {};
+  static Map<String, RocketMessageStatus> messageStatuses = {};
+  static Map<String, Function(Map response)> messageCallbacks = {};
+  static Map<String, Function(Map response)> messageErrorCallbacks = {};
 
-  static int generateMessageId() {
+  static String generateMessageId() {
     //return an 8 digit random number. Ensure that the number is unique
     //by checking that it doesn't already exist in the map.keys
     int id = Random().nextInt(99999999);
     while (messageStatuses.containsKey(id)) {
       id = Random().nextInt(99999999);
     }
-    return id;
+    return id.toString();
   }
 
   static void sendMessage(
       Map<String, dynamic> message, String typeOfCommunication,
-      {Function(Map response)? onResponse, Function(String error)? onError}) {
+      {Function(Map response)? onResponse, Function(Map errorResponse)? onError}) {
     if (!_connected) {
       throw Exception('Socket not connected. Connect to socket before sending messages');
     }
-    int id = generateMessageId();
+    String id = generateMessageId();
     try {
       //construct a message
       Map<String, dynamic> msg = {
@@ -131,12 +157,15 @@ class _SocketHelper {
       _channel.sink.add(jsonEncode(msg));
       messageStatuses[id] = RocketMessageStatus.sent;
       messageCallbacks[id] = onResponse ?? (Map response) {};
+      messageErrorCallbacks[id] = onError ?? (Map errorResponse) {};
       _logd('message sent: $msg');
     } catch (e, s) {
       _loge('sendMessage error: $e\n$s');
       messageStatuses[id] = RocketMessageStatus.failed;
       if (onError != null) {
-        onError(e.toString());
+        onError({
+          'error': e.toString(),
+        });
       }
     }
   }
