@@ -2,6 +2,7 @@ library flutter_rocketchat;
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
@@ -10,6 +11,8 @@ import 'package:dio_cache_interceptor_hive_store/dio_cache_interceptor_hive_stor
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 part 'data/auth.dart';
 part 'data/message_store.dart';
@@ -22,6 +25,7 @@ part 'data/single_channel.dart';
 part 'data/single_message.dart';
 part 'data/user_data_store.dart';
 part 'helpers/storage.dart';
+part 'helpers/sockets.dart';
 
 class RocketChatProvider {
 
@@ -32,6 +36,18 @@ class RocketChatProvider {
     await _Requests.init();
     await _StorageProvider.init();
     await _UserDataStore.init();
+  }
+
+  static bool connected() {
+    return _SocketHelper.connectionEstablished;
+  }
+
+  static Future<void> initRealtimeApiConnection() async {
+    await _SocketHelper.init();
+  }
+
+  static Future<void> closeRealtimeApiConnection() async {
+    await _SocketHelper.closeConnection();
   }
 
   static void setOptions({LogType minimumLogLevel = LogType.warning,}) {
@@ -91,4 +107,5 @@ class RocketChatProvider {
   static Future<List<MessageDetails>> getPinnedMessages ({required String channelId, int offset=0, int count=0}) async {
     return await _RocketMessageStore.getPinnedMessages(channelId: channelId, offset: offset, count: count);
   }
+
 }
