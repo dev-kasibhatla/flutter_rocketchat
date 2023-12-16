@@ -7,4 +7,5 @@ class _Durations {
   static const Duration networkConnectTimeout = Duration(seconds: 10);
   static const Duration networkReceiveTimeout = Duration(seconds: 10);
   static const Duration networkSendTimeout = Duration(seconds: 10);
+  static const Duration socketConnectTimeout = Duration(seconds: 10);
 }
