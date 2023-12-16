@@ -42,8 +42,8 @@ class RocketChatProvider {
     return _SocketHelper.connectionEstablished;
   }
 
-  static Future<void> initRealtimeApiConnection() async {
-    await _SocketHelper.init();
+  static Future<void> initRealtimeApiConnection({Function? onConnected, Function? onDisconnected}) async {
+    await _SocketHelper.init(onConnectionClosed: onDisconnected, onConnectionEstablished: onConnected);
   }
 
   static Future<void> closeRealtimeApiConnection() async {

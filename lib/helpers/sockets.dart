@@ -12,9 +12,20 @@ class _SocketHelper {
   static bool connectionEstablished = false;
   static String sessionId = '';
 
-  static Future init() async {
+  static Future init({Function? onConnectionEstablished, Function? onConnectionClosed}) async {
     assert(_UrlProvider._websocketUrl.isNotEmpty);
     messageStatuses = {};
+    if(_connected) {
+      if (!connectionEstablished) {
+        //disconnect and continue with connection
+        await closeConnection();
+      } else {
+        //already connected
+        _logw('socket already connected. Not establishing a new connection');
+        onConnectionEstablished?.call();
+        return;
+      }
+    }
     try {
       _channel = IOWebSocketChannel.connect(
           Uri.parse(_UrlProvider._websocketUrl),
@@ -22,6 +33,7 @@ class _SocketHelper {
 
       await _channel.ready;
       _connected = true;
+      waitForConnectionEstablished(onConnectionEstablished: onConnectionEstablished?? () {});
       sendConnectMessage();
       _channel.stream.listen(
           (event) {
@@ -36,15 +48,32 @@ class _SocketHelper {
             _loge('socket error: $e\n$s');
             _connected = false;
             connectionEstablished = false;
+            if (onConnectionClosed != null) {
+              onConnectionClosed();
+            }
           },
           cancelOnError: true,
           onDone: () {
             _logd('socket closed');
             _connected = false;
             connectionEstablished = false;
+            if (onConnectionClosed != null) {
+              onConnectionClosed();
+            }
           });
     } catch (e, s) {
       _loge('socket init error: $e\n$s');
+    }
+  }
+
+  static void waitForConnectionEstablished ({required Function onConnectionEstablished}) async {
+    int retries = 20;
+    for (int i = 0; i < retries; i++) {
+      if (connectionEstablished) {
+        onConnectionEstablished();
+        break;
+      }
+      await Future.delayed(const Duration(milliseconds: 150));
     }
   }
 
