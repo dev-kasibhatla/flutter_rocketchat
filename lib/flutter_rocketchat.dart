@@ -28,7 +28,6 @@ part 'helpers/storage.dart';
 part 'helpers/sockets.dart';
 
 class RocketChatProvider {
-
   /// Call this before using any other methods in this package.
   /// - [server] is the server url to connect to
   /// - [websocketUrl] is the websocket url to connect to. Typically $serverUrl/websocket
@@ -184,6 +183,48 @@ class RocketChatProvider {
       Function(Map errorResponse)? onError}) {
     return _Auth.authenticateRealtimeWithResumeToken(token,
         onConnected: onSuccess, onError: onError);
+  }
+
+
+  /// - Requires the user to be authenticated using REST API
+  /// Only the fields that need to be updated should be passed.
+  /// Passing all fields empty will result in a thrown exception.
+  /// - [name] is the name to update
+  /// - [email] is the email to update
+  /// - [username] is the username to update
+  /// - [bio] is the bio to update
+  /// - [statusType] is the status type to update
+  /// - [statusText] is the status text to update
+  /// - [nickname] is the nickname to update
+  /// - Returns true if the update was successful, false otherwise
+  ///
+  /// Rocket chat docs: [https://developer.rocket.chat/reference/api/rest-api/endpoints/user-management/users-endpoints/update-own-basic-information]()
+  static Future<bool> updateUserBasicInfo({
+    String name = '',
+    String email = '',
+    String username = '',
+    String bio = '',
+    String statusType = '',
+    String statusText = '',
+    String nickname = '',
+  }) async {
+    return await _Auth.updateProfile(
+        name: name,
+        email: email,
+        username: username,
+        bio: bio,
+        statusType: statusType,
+        statusText: statusText,
+        nickname: nickname);
+  }
+
+  /// - Requires the user to be authenticated using REST API
+  /// - [avatarUrl] is the avatar url to update
+  /// - Returns true if the update was successful, false otherwise
+  ///
+  /// Rocket chat docs: [https://developer.rocket.chat/reference/api/rest-api/endpoints/user-management/users-endpoints/set-user-avatar]()
+  static Future<bool> updateSelfAvatar({required String avatarUrl}) async {
+    return await _Auth.updateSelfAvatar(avatarUrl);
   }
 
   /// - Returns true if logout was successful, false otherwise

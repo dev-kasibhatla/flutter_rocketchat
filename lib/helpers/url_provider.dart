@@ -14,6 +14,8 @@ class _UrlProvider {
   static Uri me = Uri.parse('$_baseUrl/api/v1/me');
   static Uri logout = Uri.parse('$_baseUrl/api/v1/logout');
   static Uri userList = Uri.parse('$_baseUrl/api/v1/users.list');
+  static Uri updateOwnBasicInfo = Uri.parse('$_baseUrl/api/v1/users.updateOwnBasicInfo');
+  static Uri updateAvatar = Uri.parse('$_baseUrl/api/v1/users.setAvatar');
 
   //channel
   static Uri channelList = Uri.parse('$_baseUrl/api/v1/channels.list');

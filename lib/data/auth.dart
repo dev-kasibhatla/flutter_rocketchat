@@ -111,12 +111,15 @@ class _Auth {
   }
 
   /// https://developer.rocket.chat/reference/api/realtime-api/method-calls/authentication/login
-  static void authenticateRealtimeWithResumeToken(String token, {Function(String authToken, int tokenExpiry, String userId)? onConnected, Function(Map errorResponse)? onError}) {
+  static void authenticateRealtimeWithResumeToken(String token,
+      {Function(String authToken, int tokenExpiry, String userId)? onConnected,
+      Function(Map errorResponse)? onError}) {
     if (token.isEmpty) {
       throw Exception('Resume token cannot be empty');
     }
-    if(!_SocketHelper.connectionEstablished) {
-      throw Exception('Realtime API socket not connected. Connect to socket before sending messages');
+    if (!_SocketHelper.connectionEstablished) {
+      throw Exception(
+          'Realtime API socket not connected. Connect to socket before sending messages');
     }
     try {
       _logd('authenticating realtime api with resume token');
@@ -125,9 +128,7 @@ class _Auth {
         {
           'method': 'login',
           "params": [
-            {
-              "resume": token
-            }
+            {"resume": token}
           ],
         },
         'method',
@@ -136,10 +137,11 @@ class _Auth {
           if (response['msg'] == 'result') {
             _realtimeApiAuthenticated = true;
             //update auth token
-            authToken = response['result']?['token']??'';
-            userId = response['result']?['id']??'';
+            authToken = response['result']?['token'] ?? '';
+            userId = response['result']?['id'] ?? '';
             if (onConnected != null) {
-              onConnected(authToken, response['result']?['tokenExpires']['\$date']??0, userId);
+              onConnected(authToken,
+                  response['result']?['tokenExpires']['\$date'] ?? 0, userId);
             }
           } else {
             _realtimeApiAuthenticated = false;
@@ -158,6 +160,88 @@ class _Auth {
       );
     } catch (e, s) {
       _loge('authenticateRealtimeWithResumeToken error: $e\n$s');
+    }
+  }
+
+  static Future<bool> updateProfile({
+    String name = '',
+    String email = '',
+    String username = '',
+    String bio = '',
+    String statusType = '',
+    String statusText = '',
+    String nickname = '',
+  }) async {
+    if (!isAuthenticated()) {
+      throw Exception('User not authenticated');
+    }
+    Map<String, String> body = {};
+    if (name.isNotEmpty) {
+      body['name'] = name;
+    }
+    if (email.isNotEmpty) {
+      body['email'] = email;
+    }
+    if (username.isNotEmpty) {
+      body['username'] = username;
+    }
+    if (bio.isNotEmpty) {
+      body['bio'] = bio;
+    }
+    if (statusType.isNotEmpty) {
+      body['status'] = statusType;
+    }
+    if (statusText.isNotEmpty) {
+      body['statusText'] = statusText;
+    }
+    if (nickname.isNotEmpty) {
+      body['nickname'] = nickname;
+    }
+    if (body.isEmpty) {
+      throw Exception('No data to update. Not making request');
+    }
+    try {
+      RResponse response = await _Requests.post(
+        _UrlProvider.updateOwnBasicInfo,
+        body: {
+          'data': body,
+        },
+      );
+      _logd('updateProfile response: $response');
+      if (response.success) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e, s) {
+      _loge('updateProfile: $e\n$s');
+      throw Exception('Error updating profile: $e');
+    }
+  }
+
+  static Future<bool> updateSelfAvatar(String avatarUrl) async {
+    if (!isAuthenticated()) {
+      throw Exception('User not authenticated');
+    }
+    if (avatarUrl.isEmpty) {
+      throw Exception('Avatar url cannot be empty');
+    }
+    try {
+      RResponse response = await _Requests.post(
+        _UrlProvider.updateAvatar,
+        body: {
+          'avatarUrl': avatarUrl,
+        },
+      );
+      _logd('updateSelfAvatar response: $response');
+      if (response.success) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e, s) {
+      _loge('updateSelfAvatar: $e\n$s');
+      throw Exception('Error updating avatar: $e');
     }
   }
 
