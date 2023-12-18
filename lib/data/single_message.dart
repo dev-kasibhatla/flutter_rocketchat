@@ -8,6 +8,7 @@ class MessageDetails {
   final String message;
   final String createTimeString;
   final String senderId;
+  final String rawJson;
 
   MessageDetails({
     required this.id,
@@ -17,6 +18,7 @@ class MessageDetails {
     required this.senderId,
     required String name,
     required String username,
+    required this.rawJson,
   }) {
     _UserDataStore.addUserToStore(id, username, name, '');
   }
@@ -32,6 +34,22 @@ class MessageDetails {
       senderId: json['u']['_id']??'',
       name: json['u']['name']??'',
       username: json['u']['username']??'',
+      rawJson: jsonEncode(json),
+    );
+  }
+
+  factory MessageDetails.fromStreamJson(Map<dynamic, dynamic> json) {
+    //{msg: changed, collection: stream-room-messages, id: id, fields: {eventName: 657c4ed42995977855b545e8, args: [{_id: T8oaqddLnH7Nvhase, rid: 657c4ed42995977855b545e8, msg: ola, ts: {$date: 1702893070207}, u: {_id: iYoGcEJj4gvM5zdRC, username: coolboi, name: coolboi}, _updatedAt: {$date: 1702893070643}, urls: [], mentions: [], channels: [], md: [{type: PARAGRAPH, value: [{type: PLAIN_TEXT, value: ola}]}]}]}}
+    _logd('creating message details from stream ${jsonEncode(json)}');
+    return MessageDetails(
+      channelId: json['fields']?['args']?[0]?['rid']??'',
+      id: json['fields']?['args']?[0]?['_id']??'',
+      message: json['fields']?['args']?[0]?['msg']??'',
+      createTimeString: (json['fields']?['args']?[0]?['ts']?['\$date']??'').toString(),
+      senderId: json['fields']?['args']?[0]?['u']?['_id']??'',
+      name: json['fields']?['args']?[0]?['u']?['name']??'',
+      username: json['fields']?['args']?[0]?['u']?['username']??'',
+      rawJson: jsonEncode(json),
     );
   }
 
@@ -48,6 +66,7 @@ class MessageDetails {
       'sender': {
         'id': senderId,
       },
+      'rawJson': rawJson,
     };
   }
 
