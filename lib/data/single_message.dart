@@ -9,6 +9,7 @@ class MessageDetails {
   final String createTimeString;
   final String senderId;
   final String rawJson;
+  final int createTimeStamp ;
 
   MessageDetails({
     required this.id,
@@ -19,18 +20,28 @@ class MessageDetails {
     required String name,
     required String username,
     required this.rawJson,
+    required this.createTimeStamp,
   }) {
     _UserDataStore.addUserToStore(id, username, name, '');
+    //"2023-12-18T14:55:42.028Z"
+    //convert to int timestamp
+    // if(createTimeString.isNotEmpty) {
+    //   createTimeStamp = DateTime.parse(createTimeString).millisecondsSinceEpoch~/1000;
+    // }
   }
 
   factory MessageDetails.fromJson(Map<String, dynamic> json) {
     _logd('creating message details from ${jsonEncode(json)}');
+
+    int timestamp = DateTime.parse(json['ts']??'').millisecondsSinceEpoch~/1000;
+    // _logd('timestamp: $timestamp from ${json['ts']}');
     //add a profile
     return MessageDetails(
       id: json['_id']??'',
       channelId: json['rid']??'',
       message: json['msg']??'',
       createTimeString: json['ts']??'',
+      createTimeStamp: timestamp,
       senderId: json['u']['_id']??'',
       name: json['u']['name']??'',
       username: json['u']['username']??'',
@@ -45,12 +56,28 @@ class MessageDetails {
       channelId: json['fields']?['args']?[0]?['rid']??'',
       id: json['fields']?['args']?[0]?['_id']??'',
       message: json['fields']?['args']?[0]?['msg']??'',
-      createTimeString: (json['fields']?['args']?[0]?['ts']?['\$date']??'').toString(),
+      createTimeString: '',
+      createTimeStamp: (json['fields']?['args']?[0]?['ts']?['\$date']??''),
       senderId: json['fields']?['args']?[0]?['u']?['_id']??'',
       name: json['fields']?['args']?[0]?['u']?['name']??'',
       username: json['fields']?['args']?[0]?['u']?['username']??'',
       rawJson: jsonEncode(json),
     );
+  }
+
+  factory MessageDetails.createEmpty () {
+    return MessageDetails(
+      channelId: '',
+      id: '',
+      username: 'Unknown',
+      message: 'Error fetching this message',
+      createTimeString: (DateTime.now().millisecondsSinceEpoch~/1000).toString(),
+      name: 'Unknown',
+      rawJson: '{}',
+      senderId: 'Unknown',
+      createTimeStamp: DateTime.now().millisecondsSinceEpoch~/1000,
+    );
+
   }
 
   RocketProfile getProfile() {
@@ -63,6 +90,7 @@ class MessageDetails {
       'channelId': channelId,
       'message': message,
       'createTimeString': createTimeString,
+      'createTimeStamp': createTimeStamp,
       'sender': {
         'id': senderId,
       },
