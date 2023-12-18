@@ -6,6 +6,10 @@ enum RocketMessageStatus {
   failed,
 }
 
+enum SubTypes {
+  streamRoomMessages,
+}
+
 class _SocketHelper {
   static late IOWebSocketChannel _channel;
   static bool _connected = false;
@@ -15,6 +19,10 @@ class _SocketHelper {
   static Future init({Function? onConnectionEstablished, Function? onConnectionClosed}) async {
     assert(_UrlProvider._websocketUrl.isNotEmpty);
     messageStatuses = {};
+    messageCallbacks = {};
+    messageErrorCallbacks = {};
+    keepAliveMessages = [];
+    roomMessageSubscriptions = {};
     if(_connected) {
       if (!connectionEstablished) {
         //disconnect and continue with connection
@@ -98,14 +106,55 @@ class _SocketHelper {
             messageErrorCallbacks[id]!(message);
           }
           //remove both callbacks
-          try {
-            messageCallbacks.remove(id);
-            messageErrorCallbacks.remove(id);
-          } catch (e, s) {
-            _logw('error removing message callbacks: $e\n$s');
+          if (!keepAliveMessages.contains(id)) {
+            try {
+              messageCallbacks.remove(id);
+              messageErrorCallbacks.remove(id);
+            } catch (e, s) {
+              _logw('error removing message callbacks: $e\n$s');
+            }
           }
         }
         break;
+      //{msg: changed, collection: stream-room-messages, id: id, fields: {eventName: 657c4ed42995977855b545e8, args: [{_id: 93nMhvDR728ADcsCF, rid: 657c4ed42995977855b545e8, msg: a, ts: {$date: 1702743609088}, u: {_id: iYoGcEJj4gvM5zdRC, username: coolboi, name: coolboi}, _updatedAt: {$date: 1702743609197}, urls: [], mentions: [], channels: [], md: [{type: PARAGRAPH, value: [{type: PLAIN_TEXT, value: a}]}]}]}}]
+      case 'changed':
+        if(message.containsKey('collection')) {
+          if (message['collection'] == 'stream-room-messages') {
+            //get channel id
+            String channelId = message['fields']?['args']?[0]?['rid']??'';
+            _logd('stream-room-messages: channelId: $channelId');
+            if(channelId.isEmpty) {
+              _logw('stream-room-messages: channelId is empty');
+            } else {
+              //find all subIds for this channelId
+              List<String> subIds = [];
+              roomMessageSubscriptions.forEach((key, value) {
+                if(value == channelId) {
+                  subIds.add(key);
+                }
+              });
+              _logd('stream-room-messages: subIds: $subIds');
+              for (var subId in subIds) {
+                _logd('stream-room-messages: firing callback for subId: $subId');
+                if (messageStatuses.containsKey(subId)) {
+                  messageCallbacks[subId]!(message);
+                }
+              }
+            }
+          }
+        }
+      /// received when a subscription is ready
+      case 'ready':
+        if(message.containsKey('subs')) {
+          for (var subId in message['subs']) {
+            _logd('ready: firing callback for subId: $subId');
+            if (messageCallbacks.containsKey(subId)) {
+              messageCallbacks[subId]!(message);
+            }
+          }
+        }
+        break;
+
       default:
         //fire callback
       _logd('firing callback for message: $message');
@@ -116,11 +165,13 @@ class _SocketHelper {
           }
         }
         // remove both callbacks
-        try {
-          messageCallbacks.remove(message['id']??'');
-          messageErrorCallbacks.remove(message['id']??'');
-        } catch (e, s) {
-          _logw('error removing message callbacks: $e\n$s');
+        if (message.containsKey('id') && !keepAliveMessages.contains(message['id']??'')) {
+          try {
+            messageCallbacks.remove(message['id']??'');
+            messageErrorCallbacks.remove(message['id']??'');
+          } catch (e, s) {
+            _logw('error removing message callbacks: $e\n$s');
+          }
         }
         break;
     }
@@ -129,6 +180,8 @@ class _SocketHelper {
   static Map<String, RocketMessageStatus> messageStatuses = {};
   static Map<String, Function(Map response)> messageCallbacks = {};
   static Map<String, Function(Map response)> messageErrorCallbacks = {};
+  static List<String> keepAliveMessages = [];
+  static Map<String, String> roomMessageSubscriptions = {}; //subId <-> channelId but only for stream-room-messages
 
   static String generateMessageId() {
     //return an 8 digit random number. Ensure that the number is unique
@@ -140,13 +193,16 @@ class _SocketHelper {
     return id.toString();
   }
 
-  static void sendMessage(
+  static String sendMessage(
       Map<String, dynamic> message, String typeOfCommunication,
-      {Function(Map response)? onResponse, Function(Map errorResponse)? onError}) {
+      {Function(Map response)? onResponse, Function(Map errorResponse)? onError, bool keepAlive = false, String precalculatedId = ''}) {
     if (!_connected) {
       throw Exception('Socket not connected. Connect to socket before sending messages');
     }
-    String id = generateMessageId();
+    String id = precalculatedId;
+    if(id.isEmpty) {
+      id = generateMessageId();
+    }
     try {
       //construct a message
       Map<String, dynamic> msg = {
@@ -158,6 +214,9 @@ class _SocketHelper {
       messageStatuses[id] = RocketMessageStatus.sent;
       messageCallbacks[id] = onResponse ?? (Map response) {};
       messageErrorCallbacks[id] = onError ?? (Map errorResponse) {};
+      if (keepAlive) {
+        keepAliveMessages.add(id);
+      }
       _logd('message sent: $msg');
     } catch (e, s) {
       _loge('sendMessage error: $e\n$s');
@@ -168,6 +227,7 @@ class _SocketHelper {
         });
       }
     }
+    return id;
   }
 
   static Future closeConnection() async {
