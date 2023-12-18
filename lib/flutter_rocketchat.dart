@@ -258,7 +258,7 @@ class RocketChatProvider {
   /// - [sort] is the sort order of the messages
   /// - Returns a list of [MessageDetails] objects
   /// - If the fetch fails, the list will be empty
-  static Future<List> getChannelMessages(
+  static Future<List<MessageDetails>> getChannelMessages(
       String channel, int offset, int count, Map<String, dynamic> sort) async {
     return await _RocketMessageStore.getChannelMessages(
         channel: channel, offset: offset, count: count, sort: sort);
