@@ -28,10 +28,10 @@ part 'helpers/storage.dart';
 part 'helpers/sockets.dart';
 
 class RocketChatProvider {
-
-  static Future<void> initConfig({required String server, required String websocketUrl}) async {
-    assert (server.isNotEmpty);
-    assert (websocketUrl.isNotEmpty);
+  static Future<void> initConfig(
+      {required String server, required String websocketUrl}) async {
+    assert(server.isNotEmpty);
+    assert(websocketUrl.isNotEmpty);
     _UrlProvider.initConfig(server: server, websocketUrl: websocketUrl);
     await _Requests.init();
     await _StorageProvider.init();
@@ -42,15 +42,20 @@ class RocketChatProvider {
     return _SocketHelper.connectionEstablished;
   }
 
-  static Future<void> initRealtimeApiConnection({Function? onConnected, Function? onDisconnected}) async {
-    await _SocketHelper.init(onConnectionClosed: onDisconnected, onConnectionEstablished: onConnected);
+  static Future<void> initRealtimeApiConnection(
+      {Function? onConnected, Function? onDisconnected}) async {
+    await _SocketHelper.init(
+        onConnectionClosed: onDisconnected,
+        onConnectionEstablished: onConnected);
   }
 
   static Future<void> closeRealtimeApiConnection() async {
     await _SocketHelper.closeConnection();
   }
 
-  static void setOptions({LogType minimumLogLevel = LogType.warning,}) {
+  static void setOptions({
+    LogType minimumLogLevel = LogType.warning,
+  }) {
     _consoleLogLevel = minimumLogLevel;
     _storeLogLevel = minimumLogLevel;
   }
@@ -75,9 +80,10 @@ class RocketChatProvider {
   ///
   /// - The developer may also choose to store the [authToken] and [userId]
   /// in a secure storage to persist across sessions for a better UX.
-  static Future<RocketProfile> loginWithUsernamePassword(String username, String password) async {
-    assert (username.isNotEmpty);
-    assert (password.isNotEmpty);
+  static Future<RocketProfile> loginWithUsernamePassword(
+      String username, String password) async {
+    assert(username.isNotEmpty);
+    assert(password.isNotEmpty);
     return await _Auth.loginWithUserAndPassword(username, password);
   }
 
@@ -108,12 +114,15 @@ class RocketChatProvider {
   ///
   /// - If you don't have a resume token, you can get one by logging in with username and password
   static Future<RocketProfile> loginUsingResumeToken(String token) async {
-    assert (token.isNotEmpty);
+    assert(token.isNotEmpty);
     return await _Auth.loginUsingResumeToken(token);
   }
 
-  static void loginRealtimeUsingResumeToken(String token, {Function(String authToken, int expiry, String userId)? onSuccess, Function(Map errorResponse)? onError}) {
-    return _Auth.authenticateRealtimeWithResumeToken(token, onConnected: onSuccess, onError: onError);
+  static void loginRealtimeUsingResumeToken(String token,
+      {Function(String authToken, int expiry, String userId)? onSuccess,
+      Function(Map errorResponse)? onError}) {
+    return _Auth.authenticateRealtimeWithResumeToken(token,
+        onConnected: onSuccess, onError: onError);
   }
 
   /// - Returns true if logout was successful, false otherwise
@@ -130,33 +139,80 @@ class RocketChatProvider {
   }
 
   //channel
-  static Future<List> getChannelMessages(String channel, int offset, int count, Map<String, dynamic> sort) async {
-    return await _RocketMessageStore.getChannelMessages(channel: channel, offset: offset, count: count, sort: sort);
+  static Future<List> getChannelMessages(
+      String channel, int offset, int count, Map<String, dynamic> sort) async {
+    return await _RocketMessageStore.getChannelMessages(
+        channel: channel, offset: offset, count: count, sort: sort);
   }
 
-  static Future<List<ChannelDetails>> listAvailableChannels () async {
+  static Future<List<ChannelDetails>> listAvailableChannels() async {
     return await _RocketMessageStore.listAvailableChannels();
   }
 
-  static Future precacheUsersFromChannel({required String channelId, List<String> status = const [], int count = 500}) {
-    return _UserDataStore.precacheUsersFromChannel(channelId: channelId, status: status, count: count);
+  static Future precacheUsersFromChannel(
+      {required String channelId,
+      List<String> status = const [],
+      int count = 500}) {
+    return _UserDataStore.precacheUsersFromChannel(
+        channelId: channelId, status: status, count: count);
   }
 
   //messages
-  static Future<bool> sendMessage({required String message, required String channelId}) async {
-    return await _RocketMessageStore.sendMessage(message: message, channelId: channelId);
+  static Future<bool> sendMessage(
+      {required String message, required String channelId}) async {
+    return await _RocketMessageStore.sendMessage(
+        message: message, channelId: channelId);
   }
 
-  static Future<bool> reportMessage({required String messageId, required String description}) async {
-    return await _RocketMessageStore.reportMessage(messageId: messageId, description: description);
+  static Future<bool> reportMessage(
+      {required String messageId, required String description}) async {
+    return await _RocketMessageStore.reportMessage(
+        messageId: messageId, description: description);
   }
 
-  static Future<bool> deleteMessage({required String messageId, required String channelId}) async {
-    return await _RocketMessageStore.deleteMessage(messageId: messageId, channelId: channelId);
+  static Future<bool> deleteMessage(
+      {required String messageId, required String channelId}) async {
+    return await _RocketMessageStore.deleteMessage(
+        messageId: messageId, channelId: channelId);
   }
 
-  static Future<List<MessageDetails>> getPinnedMessages ({required String channelId, int offset=0, int count=0}) async {
-    return await _RocketMessageStore.getPinnedMessages(channelId: channelId, offset: offset, count: count);
+  static Future<List<MessageDetails>> getPinnedMessages(
+      {required String channelId, int offset = 0, int count = 0}) async {
+    return await _RocketMessageStore.getPinnedMessages(
+        channelId: channelId, offset: offset, count: count);
   }
 
+  /// Fetches messages from the server for the given channel by streaming from the realtime api
+  ///
+  /// - [channelId] is the channel id to fetch messages for
+  /// - [latestMessageTimestamp] is the timestamp of the latest message in the channel to fetch until
+  /// - [count] is the number of messages to fetch
+  /// - [lastMessageFetchedTimestamp] is the timestamp of the last message fetched
+  /// - [onResult] is the callback to be called when messages are fetched. It returns a list of [MessageDetails]
+  /// - [onError] is the callback to be called when an error occurs. It returns a [Map] with the error response
+  static void getChannelMessageHistoryRealtimeApi(
+      {required String channelId,
+      required int latestMessageTimestamp,
+      required int count,
+      required int lastMessageFetchedTimestamp,
+      Function(List<MessageDetails> messages)? onResult,
+      Function(Map errorResponse)? onError}) {
+    _RocketMessageStore.streamMessageHistoryFromRealtimeApi(
+        channelId, latestMessageTimestamp, count, lastMessageFetchedTimestamp,
+        onResponse: onResult, onError: onError);
+  }
+
+  ///
+  static void listenToChannelMessages(
+      {required String channelId,
+      Function(MessageDetails)? onMessage,
+      Function(Map error)? onError,
+      Function()? onReady}) {
+    _RocketMessageStore.startListeningToChannelMessages(channelId,
+        onMessage: onMessage, onError: onError, onReady: onReady);
+  }
+
+  static void unListenToAllMessageStreams() {
+    _RocketMessageStore.unSubAllChannelMessages();
+  }
 }
