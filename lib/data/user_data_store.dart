@@ -13,9 +13,9 @@ class _UserDataStore {
 
   //fetch and store all user profiles from the server
   static void addUserToStore(String id, String username, String name, String photoUrl) {
+    _profiles[id] = RocketProfile.basicUserDataOnly(id: id, name: name, username: username, photoUrl: photoUrl);
     if (_profiles.containsKey(id)) {
     } else {
-      _profiles[id] = RocketProfile.basicUserDataOnly(id: id, name: name, username: username, photoUrl: photoUrl);
       _saveProfilesToStorage();
     }
   }
