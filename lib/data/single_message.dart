@@ -84,6 +84,45 @@ class MessageDetails {
     return _UserDataStore._profiles[id]??RocketProfile.createErrorProfile(errorMessage: 'no profile found for $id');
   }
 
+  /// returns a human readable time string like 8:40pm, 12:30am, 1:00pm
+  /// - [agoSecondsThreshold] is the number of seconds until the time is displayed as 'x minutes ago' or 'x hours ago'
+  /// - if [agoSecondsThreshold] is 0, then the time will always be displayed as a human readable time string
+  /// - if [agoSecondsThreshold] is -1, time will be displayed as date and time
+  /// - Maximum limit for [agoSecondsThreshold] is 60*60*23 (23 hours)
+  /// - Current device time is used to calculate the time difference
+  String getHumanReadableTimeString({int agoSecondsThreshold = 0}) {
+    if (agoSecondsThreshold < -1) {
+      agoSecondsThreshold = -1;
+    }
+    if (agoSecondsThreshold > 82800) {
+      agoSecondsThreshold = 82800;
+    }
+    int now = DateTime.now().millisecondsSinceEpoch~/1000;
+    int diff = now - createTimeStamp;
+    if (agoSecondsThreshold == 0 || diff > agoSecondsThreshold) {
+      //return human readable time
+      return DateFormat.jm().format(DateTime.fromMillisecondsSinceEpoch(createTimeStamp*1000));
+    } else if (agoSecondsThreshold == -1) {
+      //return date and time
+      return DateFormat('MMM d, y, h:mm a').format(DateTime.fromMillisecondsSinceEpoch(createTimeStamp*1000));
+    } else {
+      // if less than 60 seconds ago, return 'just now'
+      if (diff < 60) {
+        return 'just now';
+      }
+      // if less than 60 minutes ago, return 'x minutes ago'
+      if (diff < 3600) {
+        return '${(diff/60).floor()} minutes ago';
+      }
+      // if less than 24 hours ago, return 'x hours ago'
+      if (diff < 86400) {
+        return '${(diff/3600).floor()} hours ago';
+      }
+      // if more than 24 hours ago, return 'x days ago'
+      return '${(diff/86400).floor()} days ago';
+    }
+  }
+
   Map toMap() {
     return {
       'id': id,
