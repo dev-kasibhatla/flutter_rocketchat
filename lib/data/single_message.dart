@@ -123,6 +123,31 @@ class MessageDetails {
     }
   }
 
+
+  /// - Returns a human readable date like '11 Dec 2020'
+  /// - If the date is today, then 'Today' is returned
+  /// - If the date is yesterday, then 'Yesterday' is returned
+  /// - If the date is last 6 days, then 'Monday', 'Tuesday' etc is returned
+  /// - If the date is more than 6 days ago, then '11 Dec 2020' is returned
+  /// - If [getRelativeDate] is true, then the date is returned as 'Today', 'Yesterday' etc
+  /// - If [getRelativeDate] is false, then the date is always returned as '11 Dec 2020'
+  String getHumanReadableDateString({bool getRelativeDate = true}) {
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(createTimeStamp*1000);
+    DateTime now = DateTime.now();
+    if (getRelativeDate) {
+      if (date.year == now.year && date.month == now.month && date.day == now.day) {
+        return 'Today';
+      }
+      if (date.year == now.year && date.month == now.month && date.day == now.day - 1) {
+        return 'Yesterday';
+      }
+      if (date.isAfter(now.subtract(const Duration(days: 6)))) {
+        return DateFormat('EEEE').format(date);
+      }
+    }
+    return DateFormat('d MMM y').format(date);
+  }
+
   Map toMap() {
     return {
       'id': id,
