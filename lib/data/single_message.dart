@@ -57,7 +57,7 @@ class MessageDetails {
       id: json['fields']?['args']?[0]?['_id']??'',
       message: json['fields']?['args']?[0]?['msg']??'',
       createTimeString: '',
-      createTimeStamp: (json['fields']?['args']?[0]?['ts']?['\$date']??''),
+      createTimeStamp: (json['fields']?['args']?[0]?['ts']?['\$date']??0)~/1000,
       senderId: json['fields']?['args']?[0]?['u']?['_id']??'',
       name: json['fields']?['args']?[0]?['u']?['name']??'',
       username: json['fields']?['args']?[0]?['u']?['username']??'',
