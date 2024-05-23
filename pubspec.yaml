@@ -1,6 +1,6 @@
 name: flutter_rocketchat
-description: A new Flutter project.
-version: 0.0.2
+description: A dart wrapper for Rocket Chat REST API
+version: 0.0.3
 homepage: https://github.com/dev-kasibhatla/flutter_rocketchat
 
 environment:
